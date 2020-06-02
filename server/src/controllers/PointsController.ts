@@ -4,7 +4,7 @@ import knex from '../database/connection'
 import { mapItems } from '../utils'
 import { IMAGE_BASE_URL } from '../constants'
 
-class PointsController {
+export default class PointsController {
   async index(request: Request, response: Response) {
     const { uf, city, items } = request.query
     const query: Knex.QueryBuilder = knex('points').join(
@@ -60,4 +60,3 @@ class PointsController {
     }
   }
 }
-export default PointsController
