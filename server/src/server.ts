@@ -12,5 +12,5 @@ app.use(
   express.static(path.resolve(__dirname, '..', 'public', 'images'))
 )
 
-app.use('/', router)
+app.use('/api', router)
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
