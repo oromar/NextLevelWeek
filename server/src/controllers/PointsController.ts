@@ -1,26 +1,28 @@
 import { Request, Response } from 'express'
+import Knex from 'knex'
 import knex from '../database/connection'
 import { mapItems } from '../utils'
+import { IMAGE_BASE_URL } from '../constants'
 
 class PointsController {
   async index(request: Request, response: Response) {
     const { uf, city, items } = request.query
-    let query = knex('points').join(
+    const query: Knex.QueryBuilder = knex('points').join(
       'point_items',
       'points.id',
       '=',
       'point_items.point_id'
     )
     if (items) {
-      const parsedItems = (items as string)
+      const parsedItems: number[] = (items as string)
         .split(',')
         .map((item) => Number(item.trim()))
       if (parsedItems) {
-        query = query.whereIn('point_items.items_id', parsedItems)
+        query.whereIn('point_items.items_id', parsedItems)
       }
     }
-    if (uf) query = query.where('uf', uf as string)
-    if (city) query = query.where('city', city as string)
+    if (uf) query.where('uf', uf as string)
+    if (city) query.where('city', city as string)
     const result = await query.distinct().select('points.*')
     return response.json(result)
   }
@@ -37,36 +39,22 @@ class PointsController {
     return response.json(result)
   }
   async create(request: Request, response: Response) {
-    const {
-      name,
-      email,
-      whatsapp,
-      latitude,
-      longitude,
-      city,
-      uf,
-      items,
-    } = request.body
+    const { items } = request.body
     const trx = await knex.transaction()
     try {
-      const insertedIds = await trx('points').insert({
-        image:
-          'https://images.unsplash.com/photo-1578916171728-46686eac8d58?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60',
-        name,
-        email,
-        whatsapp,
-        latitude,
-        longitude,
-        city,
-        uf,
-      })
+      const data = {
+        ...request.body,
+        image: `${IMAGE_BASE_URL}fake-image.jpg`,
+      }
+      delete data.items
+      const insertedIds = await trx('points').insert(data)
       const pointItems = items.map((item: number) => ({
         items_id: item,
         point_id: insertedIds[0],
       }))
       await trx('point_items').insert(pointItems)
       await trx.commit()
-      return response.json({ ...request.body, id: insertedIds[0] })
+      return response.json({ ...data, id: insertedIds[0] })
     } catch (error) {
       await trx.rollback()
     }
