@@ -46,6 +46,7 @@ export default class PointsController {
         ...request.body,
         image: `${IMAGE_BASE_URL}fake-image.jpg`,
       }
+      const items = data.items
       delete data.items
       const insertedIds = await trx('points').insert(data)
       const pointItems = items.map((item: number) => ({
@@ -54,7 +55,7 @@ export default class PointsController {
       }))
       await trx('point_items').insert(pointItems)
       await trx.commit()
-      return response.json({ ...data, id: insertedIds[0] })
+      return response.json({ items, ...data, id: insertedIds[0] })
     } catch (error) {
       await trx.rollback()
     }
